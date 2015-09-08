@@ -1,0 +1,91 @@
+########## SUMMARY
+To implement a new protocol, the developer must make a class, inherited from Protocol.
+The protocol must implement three methods, and use several provided methods to interact with the simulation.
+Finally, the protocol must be included in VANETSimulator.cpp to make it visible to kthe core simulation logic.
+
+########## GLOBAL SOURCE FILES
+VANETSimulator.cpp: Main Source file housing both the core simulation logic and the implementation for global methods. (See Below)
+Globals.h: Contains definitions for methods and variables that are used to interact with core simulation logic.
+Enums.h/.cpp: Contains information for defining and manipulating enumerated sets.
+
+########## CLASSES:
+AnonymitySet: Contains a list of vehicles that have been anonymized with each other.
+
+Entities:
+TrafficCounter: A struct containing counters for various types of traffic. Automatically calculates peak usage and categorically tracks various traffic types.
+INetworked: Interface for all networked units. Networked units can transmit and receive data, and exist at a particular point in the simulation space.
+RSU: Defines a road-side unit, usually a stationary piece of infastructure which acts as a communication node between vehicles and the internet.
+Vehicle: Defines a car with an on-board unit. Has information not only about its current location, but about where and when it enters and leaves silent periods, or enters and leaves the simulation.
+
+Anonymity Protocols:
+Protocol: The base, abstract class that defines methods common to all protocols.
+-bool SimulationBegin(): Called after initializations, but before the simulation begins churning through vehicle data. Returns false if there was an error and the simulation should halt.
+-bool SimulationTick(): Called after each time step and is used to calculate on-going traffic behaviors throughout the simulation. Returns false if there was an error and the simulation should halt.
+-void SimulationEnd(): Called after the simulation has completed, but before many outputs are calculated. Chiefly used to perform final calculations and clean-up data.
+DummyProtocol: Simply returns true on all methods except SimulationEnd.
+DummyEventProtocol: Simulates silent periods coordinated by a single RSU, and calculates the application-level traffic for both authentic and dummy messages.
+-DummyEventProtocol(bool OnTheFly,bool Irregular,bool GroupLeader): Determines protocol behavior. Flags determine whether the protocol is Stationary or On-the-Fly, and whether it is Regular or Irregular. Group Leader models are unimplemented.
+StationaryMixPointIrregular: [DEPRECIATED] Simulates randomly-timed silent periods at a fixed point, without dummy events.
+StationaryMixPointRegular: [DEPRECIATED] Simulates regularly-timed silent periods at a fixed point, without dummy events.
+
+Data Structures:
+ArrayList: Variable-Length Array
+Dictionary: As ArrayList, but indexed with std::string keys.
+LinkedList: Unused, included for future expansion if needed.
+
+########## HOW TO IMPLEMENT NEW PROTOCOLS:
+All protocols begin with a class inheriting from the "Protocol" class. These classes must implement the following three methods:
+
+-bool SimulationBegin()
+This method's primary purpose is to instantiate variables based on parameters specified in the parameter file. Here are the methods used for this purpose:
+
+void SeedRandom(): Seeds the random number generator, either using the RandomSeed run variable, or a randomly chosen seed.
+bool CheckRunVariableExists(std::string VariableName): Returns true if this variable was specified by the parameter file.
+string GetRunVariableString(string Key): Converts the run variable to a string before returning.
+int GetRunVariableInteger(string Key): Converts the run variable to an integer before returning.
+int GetRunVariableFloat(string Key): Converts the run variable to a float before returning.
+
+It is the developer's responsibility to check CheckRunVariableExists before attempting to retrieve values. Failing to do so causes undetermined behavior.
+SimulationBegin should return true of the simulation can proceed, or false if the simulation cannot continue, such as if required run variables were not defined.
+The following macro, defined in Globals.h, simplifies this process by printing an error message and returning false in the CALLING method if a variable does not exist:
+PreSimulationVariableCheck(string VariableName)
+WARNING: Compiler macros are dangerous. Do not use if you are not comfortable with their usage.
+
+This method returns false if the simulation must stop because of an unrecoverable error.
+
+-bool SimulationTick()
+This method is called after each iteration of time, after all vehicles have been updated for that tick. Most of the protocol logic takes place here, including the announcement of mix zones, traffic calculation, and management of anonymity sets.
+
+These variables contain lists of various simulation entities or structures:
+ArrayList<AnonymitySet*> AnonymitySets: A list of all AnonymitySets in the simulation.
+ArrayList<Vehicle*> Vehicles: A list of all Vehicles in the simulation.
+Vehicles are created and manipulated by the core simulation logic. It is not recommended for the protocol to alter this list. Anonymity sets, however, can and should be populated by the protocol making those anonymity sets.
+
+To determine whether a vehicle should be included in the mix zone, it will usually be neccesary to iterate over all vehicles and determine if that vehicle is within range of the mix zone. This process is simplified with this global function:
+ArrayList<Vehicle*>* GetVehiclesInRange(INetworked* Transmitter,float Radius);
+This function return an ArrayList with references to all the Vehicles within a particular range of the specified Transmitter.
+WARNING: Remember to delete this structure once you are finished with it.
+
+The protocol should, after determining the logistics of the situation, create anonymity sets, fill them with valid vehicles, and push them to the global roster.
+After an AnonymitySet has been created, it can be populated with vehicles with AnonymitySet->AddVehicle or AnonymitySet->RemoveVehicle. This will automatically edit the Vehicle's meta-data to match that of the anonymity set.
+AnonymitySets.PushObj(CreatedSet) will push that set to the global roster, at which point the roster owns that set and need not be managed by the protocol unless there are additional changes to be made.
+
+Once you've calculated the AnonymitySets, the protocol must then use these functions to log network traffic within the simulation.
+void LogTraffic(INetworked* Sender,TrafficType Type): Used to record a single packet. Sender can be NULL, but it is recommended that you create an RSU object for non-vehicle traffic.
+void LogLegitimateTraffic(INetworked* ContactPoint): Iterates over all vehicles and sends a single application packet.
+void LogApplicationTraffic(INetworked* ContactPoint): Iterates over all anonymity sets and simulates each vehicle sending both legitimate and dummy traffic.
+LogTraffic is typically used to keep track of mix zone announcements, and the initial handshake between vehicles when the anonymity set is founded.
+LogLegitimateTraffic forces all vehicles in the simulation to send out a single application message, simulationg standard traffic from users of LBS. This method is not typically neccesary because it is included in LogApplicationTraffic.
+LogApplicationTraffic calls LogLegitimateTraffic, then iterates over all anonymity sets and sends dummy messages to mask each other member of the set.
+
+This method returns false if the simulation must stop because of an unrecoverable error.
+
+-void SimulationEnd()
+This method is used to finish the last calculations and finish outputs.
+
+Many standardized outputs are calculated automatically using information in the anonymity set roster. The protocol can add its own outputs with Outputs.Set(VariableName,VariableValue).
+Both parameters to this method are strings. std::to_string() in <string> will perform the neccessary conversion. The output format interpreter will automatically convert the variable back to the appropriate type when it is displayed.
+
+Finally, once you have implemented the above three messages, the protocol must be included in the main VANETSimulator.cpp file. Near the top of the method implementation blocks is a method called AssignPrimaryProtocol(string).
+Add your protocol to this block of code using the templates provided by the standard protocols. You must also include any relevant headers to make your class visible to the compiler.
+You can then utilize the protocol using parameter files as specified in Parameter Files.txt.

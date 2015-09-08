@@ -1,0 +1,18 @@
+PROTOCOL StationaryRegularDummyEvents
+OUTPUT %AverageAnonymitySetSize%, %AverageAnonymityDistance%, %AverageAnonymityTime%, %Packet Count: Overhead%, %Packet Count: TOTAL%, %Packet Count: Overhead Ratio%, %AnonymousVehicleCount% / %VehicleMax%
+SilentPeriod 10
+PARAMETERS MaxVehiclesInSet RandomSeed
+TransmitterRadius 1000
+VehicleRadius 300
+MinRandomDuration 20
+MaxRandomDuration 40
+ECHO CITY TEST
+TRACEFILE ../vanet-srtt/city.srtt
+MixPointX 390
+MixPointY 1710
+RUN 0 1
+RUN 0 2
+RUN 0 3
+RUN 0 4
+RUN 0 5
+

@@ -1,0 +1,7 @@
+PROTOCOL DummyProtocol
+TRACEFILE ../vanet-srtt/rural.srtt
+RUN
+TRACEFILE ../vanet-srtt/urban.srtt
+RUN
+TRACEFILE ../vanet-srtt/city.srtt
+RUN

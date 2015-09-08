@@ -1,0 +1,28 @@
+PROTOCOL StationaryRegularDummyEvents
+TransmitterRadius 1500
+SilentPeriod 30
+MaxVehiclesInSet 30
+GlobalMessageLimit 1200
+VehicleNumMask 10
+VehicleNumMaskOffset 1
+OUTPUT VERBOSE
+ECHO RURAL SIMULATION
+TRACEFILE ../vanet-srtt/rural.srtt
+MixPointX 2290
+MixPointY 800
+RUN
+ECHO CITY SIMULATION
+TRACEFILE ../vanet-srtt/city.srtt
+MixPointX 390
+MixPointY 1710
+PARAMETERS VehicleNumMaskOffset
+RUN 0
+RUN 1
+RUN 2
+RUN 3
+RUN 4
+RUN 5
+RUN 6
+RUN 7
+RUN 8
+RUN 9

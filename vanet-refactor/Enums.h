@@ -1,0 +1,3 @@
+#pragma once
+enum TrafficType{NOMINATE,ANNOUNCEMENT,JOIN,JOIN_CONFIRMATION,APPLICATION,DUMMY,TOTAL_TRAFFIC_TYPES};
+const char* GetEnumName(TrafficType E);

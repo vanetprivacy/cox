@@ -1,0 +1,4 @@
+PROTOCOL DummyProtocol
+TRACEFILE ../vanet-srtt/rural.srtt
+OUTPUT VERBOSE
+RUN

@@ -1,0 +1,115 @@
+########## SUMMARY
+The simulation is controlled via a plaintext file called a Parameter File.
+This parameter file has a list of instructions for the simulator, including several sets of inputs used for simulating different circumstances.
+
+########## PARAMETER FILE
+The executable file takes a single argument, which is the file path of a parameter file that defines how the execution should be run.
+Parameter files are plaintext documents, where each line is a single command.
+Each line is a series of space-separated arguments, where the first argument is the command to be run:
+
+ECHO: Prints the remainder of the line to the console on its own line. Typically used to partition output data so it is more easily read.
+PROTOCOL: Specifies which anonymity protocol is to be considered during subsequent runs. See below for all protocol names.
+TRACEFILE: Specifies the file path of the trace file containing vehicle telemetry.
+[Variable Name]: If the first argument is not recognized, the simulator assumes it is the name of the variable, and sets that variable to the value in the second argument. Additional arguments are ignored.
+PARAMETERS: This command outlines the format of arguments for the RUN command. You must supply a number of variable names, and the arguments supplied to the RUN are assigned to those respective variables.
+RUN: Executes a single simulation. The format of remaining arguments is specified with the PARAMETERS command.
+
+OUTPUT: Specifies how each line of output should be formatted. The remainder of the line is copied for each simulation, but replaces special markers with values of protocol outputs.
+Special markers take either of the following formats:
+%VariableName%
+%FormatSpecifiers;VariableName%
+The resulting line of output is given to printf using '%s' notation, and adding the value of the named variable as a parameter. If FormatSpecifiers is provided, that replaces the format token after the %.
+Examples:
+"K=%AverageAnonymitySetSize%" -> "K=7.19672"
+"%AverageAnonymitySetSize% %CongestionCount%" -> "7.19672 104734"
+Instead of a formatted output, you may also pass "legacy" as the paramter to restore the default message, or "verbose" to iterate over all outputs.
+
+########## RUN VARIABLES:
+Each protocol has requirements for which variables must be defined, and they are outlined below. Unless otherwise specified, all variables must be defined before the first run, or behavior is undefined. Variables can be assigned individually, like so:
+MixPointX 2290
+MixPointY 800
+
+Variables can also be set by supplying them as arguments after the RUN command. This example is equivalent to the example above:
+PARAMETERS MixPointX MixPointY
+RUN 2290 800
+
+The benefit of specifying parameters in this format is that different values can be assigned to each variable for different runs. Note also that these methods can be combined:
+MixPointX 2290
+PARAMETERS MixPointY
+RUN 800
+RUN 810
+RUN 820
+RUN 830
+RUN 840
+In this example, five simulations are run, where MixPointX is constant, but MixPointY is adjusted before each run.
+
+########## INPUTS:
+RandomSeed: The seed value for the random number generator. By default, the simulator will use a random seed, but this is NOT reccomended for the sake of repeatability.
+SilentPeriod: The duration that vehicles should be silent after entering a mix zone.
+MaxVehiclesInSet: The maximum number of vehicles that a group founder will allow into the anonymity set. Only used in Dummy Event models.
+VehicleTransmissionRadius: The broadcast range of each individual vehicle.
+MixPointX/MixPointY: The coordinates of the RSU. Used only in stationary models.
+MinRandomDuration/MaxRandomDuration: The minimum and maximum time between the announcement of each mix zone. Used only in Irregular models.
+VehicleMessageLimit: The number of packets that a vehicle can transmit per tick. Additional packets are counted as lost.
+GlobalMessageLimit: The number of packets that can be transmitted within a particular region.
+-NOTE: To calculate this limit, the simulator counts the number of packets transmitted by the current transmitter, plus those of otherotehr vehicles
+VehicleNumMask: Artificially excludes vehicles from the simulation, including only every Nth vehicle in the simulation.
+VehicleNumMaskOffset: Shifts the selection of cars using VehicleNumMask. Vehicles are included if VehicleNum%VehicleNumMask==VehicleNumMaskOffset.
+
+########## OUTPUTS:
+VehicleMax: The number of vehicles in the simulation, as specified by the trace file.
+TimeMax: The number of time intervals in the simulation, as specified by the trace file.
+TraceFile: The filename of the trace file, as it was specified with the TRACEFILE command.
+RunTime: The number of minutes that were required to finish that particular simulation.
+RandomSeed: If not specified as an input, then the seed is chosen automatically and set as an output. Otherwise,tihs is equal to the input of the same name.
+AverageAnonymitySetSize: The average size of the anonymity set at any point in time.
+-NOTE: Vehicles not part of an anonymity set are considered to have a set size of 1.
+-This means that non-anonymized vehicles and vehicles that spend most of their time in the simulation outside of a set will cause this value to approach 1.
+PeakAnonymitySetSize: The largest size that any anonymity set has reached.
+AverageAnonymityDistance: The average distance from each car to the other members of it's anonymity set.
+-NOTE: As AverageAnonymitySetSize, this value is lowered by vehicles that aren't anonymized, or not anonymous for as long. The value aproaches 0 instead.
+PeakAnonymityDistance: The farthest distance that any vehicle has gotten from the other members of its anonymity set.
+AverageAnonymityTime: The average time that each vehicle spends anonymous.
+PeakAnonymityTime: The longest that any vehicle has spent anonymous.
+AnonymousVehicleCount: The total number of vehicles that were entered into an anonymity set.
+TotalAnonymitySets: The total number of anonymity sets which were created.
+PeakTrafficUnit: The unit at which packets transmitted per tick peaked.
+PeakTrafficAmount: The peak number of packets transmitted at a particular unit and time.
+Packet Count: <Packet Type>: The number of packets that were transmitted of a particular category. Example Packet Types:
+-NOMINATE: Sent by the RSU in on-the-fly models to force a vehicle to announce a mix zone.
+-ANNOUNCE: Broadcasted by the founder of a group, whether a vehicle or RSU.
+-JOIN: Sent by vehicles that with to join an anonymity set.
+-JOIN CONFIRM: Sent by the group announcer to permit a vehicle into an anonymity set.
+-APPLICATION: Data sent every tick when a vehicle is not silent.
+-DUMMY: Packets sent to spoof APPLICATION packets, which cloak legitimate traffic.
+-TOTAL: The sum of all of the above.
+-Overhead: As TOTAL, minus APPLICATION.
+-Overhead Ratio: Overhead divided by TOTAL.
+-Successful: All packets which were successfully transmitted.
+-Lost: All packets which were marked as lost due to some limit.
+PacketLoss: The percentage of all packets which were lost.
+Throughput: The total number of successfully transmitted packets, divided by the time intervals in the simulation.
+
+In addition, all inputs are provided as outputs, provided they were specified in the parameter file.
+
+########## PROTOCOLS:
+DummyProtocol: Does nothing.
+StationaryRegularDummyEvents: Dummy event model with a single, hand-specified mix zone announcing groups at regular intervals.
+StationaryIrregularDummyEvents: Dummy event model with a single, hand-specified mix zone announcing groups at random intervals.
+OnTheFlyRegularDummyEvents: Dummy event model where the RSU informs a random vehicle to form a group at regular intervals.
+OnTheFlyIrregularDummyEvents: Dummy event model where the RSU informs a random vehicle to form a group at random intervals.
+
+Legacy Protocols: (DEPRECIATED - DOES NOT UTILIZE DUMMY EVENTS)
+*StationaryMixPointRegular:
+MixPointX: X-coordinate of the stationary mix point.
+MixPointY: Y-coordinate of the stationary mix point.
+ZoneCount: The number of mix zones to announce. The total simulation time is divided by this amount to get the silent period.
+ZoneRadius: The radius of the mix zone, with the center at (MixPointX,MixPointY).
+
+*StationaryMixPointIrregular:
+MixPointX: X-coordinate of the stationary mix point.
+MixPointY: Y-coordinate of the stationary mix point.
+ZoneRadius: The radius of the mix zone, with the center at (MixPointX,MixPointY).
+RandDurationMin: The minimum duration of the silent period.
+RandDurationMax: The maximum duration of the silent period.
+RandomSeed: The seed to use at the beginning of the simulation to set the random generator.

@@ -1,0 +1,73 @@
+PROTOCOL OnTheFlyIrregularDummyEvents
+OUTPUT %PacketLoss% %Packet Count: Overhead Ratio% %Throughput% %AverageAnonymitySetSize% %AverageAnonymityDistance% %AverageAnonymityTime% %AnonymousVehicleCount% %SilentPeriod%
+SilentPeriod 10
+PARAMETERS MaxVehiclesInSet RandomSeed
+TransmitterRadius 1000
+VehicleRadius 300
+MinRandomDuration 20
+MaxRandomDuration 40
+GlobalMessageLimit 1200
+VehicleTransmissionRadius 300
+ECHO RURAL TEST
+TRACEFILE ../vanet-srtt/rural.srtt
+MixPointX 2290
+MixPointY 800
+RUN 4 1
+RUN 5 1
+RUN 6 1
+RUN 7 1
+RUN 8 1
+RUN 9 1
+RUN 10 1
+RUN 11 1
+RUN 12 1
+RUN 13 1
+RUN 14 1
+RUN 15 1
+RUN 16 1
+RUN 17 1
+RUN 18 1
+RUN 19 1
+RUN 20 1
+ECHO URBAN TEST
+TRACEFILE ../vanet-srtt/urban.srtt
+MixPointX 1430
+MixPointY 2490
+RUN 4 1
+RUN 5 1
+RUN 6 1
+RUN 7 1
+RUN 8 1
+RUN 9 1
+RUN 10 1
+RUN 11 1
+RUN 12 1
+RUN 13 1
+RUN 14 1
+RUN 15 1
+RUN 16 1
+RUN 17 1
+RUN 18 1
+RUN 19 1
+RUN 20 1
+ECHO CITY TEST
+TRACEFILE ../vanet-srtt/city.srtt
+MixPointX 390
+MixPointY 1710
+RUN 4 1
+RUN 5 1
+RUN 6 1
+RUN 7 1
+RUN 8 1
+RUN 9 1
+RUN 10 1
+RUN 11 1
+RUN 12 1
+RUN 13 1
+RUN 14 1
+RUN 15 1
+RUN 16 1
+RUN 17 1
+RUN 18 1
+RUN 19 1
+RUN 20 1
